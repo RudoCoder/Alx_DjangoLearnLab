@@ -1,9 +1,26 @@
-from rest_framework import generics, permissions, filters
+from rest_framework import generics, permissions, filters, viewsets
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Book, Author
 from .serializers import BookSerializer, AuthorSerializer
 
 # Create your views here.
+
+class BookviewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for viewing and editing book instances.
+    Provides CRUD operations and supports filtering, searching, and ordering.
+    """
+    queryset = Book.objects.all()
+    serializer_class = BookSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['title', 'author__name', 'publication_year']
+    search_fields = ['title', 'author__name']
+    ordering_fields = ['title', 'publication_year']
+    ordering = ['title']
+
 class BookListView(generics.ListAPIView):
     """
     List view retrieves all books in the system.
