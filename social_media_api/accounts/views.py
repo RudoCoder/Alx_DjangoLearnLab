@@ -1,40 +1,28 @@
-from rest_framework import generics, permissions
+from rest_framework import status, generics
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from .models import CustomUser
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from .serializers import UserSerializer
 
 
-class RegisterView(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
+class FollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        user = self.get_serializer().instance
-        token, _ = Token.objects.get_or_create(user=user)
-        response.data['token'] = token.key
-        return response
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        request.user.following.add(target_user)
+        target_user.followers.add(request.user)
+        return Response({"detail": f"You are now following {target_user.username}"},
+                        status=status.HTTP_200_OK)
 
 
-class LoginView(generics.GenericAPIView):
-    serializer_class = LoginSerializer
-    permission_classes = [permissions.AllowAny]
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
-
-
-class ProfileView(generics.RetrieveAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        request.user.following.remove(target_user)
+        target_user.followers.remove(request.user)
+        return Response({"detail": f"You have unfollowed {target_user.username}"},
+                        status=status.HTTP_200_OK)

@@ -3,14 +3,23 @@ from django.db import models
 
 
 class CustomUser(AbstractUser):
-    date_of_birth = models.DateField(null=True, blank=True)
-    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)
-    bio = models.TextField(blank=True)  # required by checker
+    bio = models.TextField(blank=True, null=True)
+    profile_picture = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
+
+    # followers → who follows this user
     followers = models.ManyToManyField(
-        'self',
+        "self",
         symmetrical=False,
-        related_name='following',
-        blank=True
+        related_name="user_followers",
+        blank=True,
+    )
+
+    # following → who this user follows
+    following = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        related_name="user_following",
+        blank=True,
     )
 
     def __str__(self):
