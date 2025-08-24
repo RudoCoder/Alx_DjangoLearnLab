@@ -159,3 +159,8 @@ SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_SSL_REDIRECT = True  # Only if using HTTPS
+
+import os
+
+# Heroku or any cloud provider uses PORT environment variable
+PORT = os.environ.get('PORT', 8000)  # default 8000 for local dev
